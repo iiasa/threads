@@ -1,8 +1,6 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
 
 from .models import Comment
 from .serializers import CommentCreateSerializer, CommentSerializer, CommentListSerializer, CommentUpdateSerializer
@@ -15,6 +13,10 @@ from rest_framework.authtoken.models import Token
 import random
 import string
 import django_filters
+
+from dj_rest_auth.registration.views import SocialLoginView
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 
 class CommentFilter(django_filters.FilterSet):
@@ -48,31 +50,21 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    @swagger_auto_schema(
-        operation_description="Like a comment",
-        responses={200: openapi.Response('Liked successfully')}
-    )
+    
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def like(self, request, pk=None):
         comment = self.get_object()
         comment.liked_by.add(request.user)
         return Response({'status': 'liked'}, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(
-        operation_description="Unlike a comment",
-        responses={200: openapi.Response('Unliked successfully')}
-    )
+    
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def unlike(self, request, pk=None):
         comment = self.get_object()
         comment.liked_by.remove(request.user)
         return Response({'status': 'unliked'}, status=status.HTTP_200_OK)
 
-    @swagger_auto_schema(
-        operation_description="Update a comment (only by owner)",
-        request_body=CommentUpdateSerializer,
-        responses={200: CommentSerializer()}
-    )
+    
     def update(self, request, *args, **kwargs):
         comment = self.get_object()
         if comment.is_deleted:
@@ -81,11 +73,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'You are not the author of this comment.'}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
 
-    @swagger_auto_schema(
-        operation_description="Partially update a comment (only by owner)",
-        request_body=CommentUpdateSerializer,
-        responses={200: CommentSerializer()}
-    )
+    
     def partial_update(self, request, *args, **kwargs):
         comment = self.get_object()
         if comment.is_deleted:
@@ -94,10 +82,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'You are not the author of this comment.'}, status=status.HTTP_403_FORBIDDEN)
         return super().partial_update(request, *args, **kwargs)
 
-    @swagger_auto_schema(
-        operation_description="Soft delete a comment (only by owner)",
-        responses={204: openapi.Response('Comment marked as deleted')}
-    )
+    
     def destroy(self, request, *args, **kwargs):
         comment = self.get_object()
         if comment.is_deleted:
@@ -110,44 +95,48 @@ class CommentViewSet(viewsets.ModelViewSet):
     
 
 
-    @swagger_auto_schema(
-        manual_parameters=[
-            openapi.Parameter(
-                'thread_prefix',
-                openapi.IN_QUERY,
-                description="Filter thread_id that starts with this value",
-                type=openapi.TYPE_STRING
-            )
-        ]
-    )
+    
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+    
 
 
-class AnonymousLoginView(APIView):
-    @swagger_auto_schema(
-        operation_description="Anonymous login using just username and email. Returns a token.",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=['username', 'email'],
-            properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, format='email')
-            }
-        ),
-        responses={
-            200: openapi.Response(
-                description="Auth token returned",
-                examples={
-                    "application/json": {
-                        "user": {"id": 1, "username": "guest", "email": "guest@example.com"},
-                        "token": "abc123..."
-                    }
-                }
-            ),
-            400: "Missing fields"
+
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "username": {"type": "string"},
+                "email": {"type": "string", "format": "email"}
+            },
+            "required": ["username", "email"]
         }
-    )
+    },
+    responses={
+        200: {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "integer"},
+                        "username": {"type": "string"},
+                        "email": {"type": "string", "format": "email"}
+                    }
+                },
+                "token": {"type": "string"}
+            }
+        },
+        400: OpenApiTypes.OBJECT,
+    }
+)
+class AnonymousLoginView(APIView):
+    
     def post(self, request):
         username = request.data.get("username")
         email = request.data.get("email")

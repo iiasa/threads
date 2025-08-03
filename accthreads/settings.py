@@ -39,9 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'drf_yasg',
-
     'django_filters',
+    'drf_spectacular',
 
     'rest_framework',
     'rest_framework.authtoken',
@@ -55,7 +54,18 @@ INSTALLED_APPS = [
     'comments'
 ]
 
+# SHARED_APPS = (
+#    'tenants',
+# )
+
+# INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+TENANT_MODEL = "tenants.Client" # app.Model
+
+TENANT_DOMAIN_MODEL = "tenants.Domain"  # app.Model
+
 MIDDLEWARE = [
+    # 'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -153,6 +163,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 REST_USE_JWT = False
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
@@ -176,4 +187,14 @@ SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,  # Hide BasicAuth by default (optional)
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Comment API',
+    'DESCRIPTION': 'Nested comments with tenants, auth, and filters',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
+
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
