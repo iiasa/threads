@@ -32,40 +32,48 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
+SHARED_APPS = [
+    'django_tenants',      # core tenant routing logic
+    'tenants',             # your tenant model (e.g., Customer, Domain)
     'django.contrib.contenttypes',
+    'django.contrib.auth',      # ✅ public superuser lives here
+    'django.contrib.sessions',
+    'django.contrib.admin',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'corsheaders',              # optional but typically shared
+]
+
+TENANT_APPS = [
+    'django.contrib.contenttypes',
+    'django.contrib.auth',         # ✅ tenant-specific users
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    'rest_framework',
+    'rest_framework.authtoken',
     'django_filters',
     'drf_spectacular',
 
-    'rest_framework',
-    'rest_framework.authtoken',
     'dj_rest_auth',
     'dj_rest_auth.registration',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'corsheaders',
-    'comments'
+
+    'comments',                    # your custom tenant app
 ]
 
-# SHARED_APPS = (
-#    'tenants',
-# )
-
-# INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 TENANT_MODEL = "tenants.Client" # app.Model
 
 TENANT_DOMAIN_MODEL = "tenants.Domain"  # app.Model
 
 MIDDLEWARE = [
-    # 'django_tenants.middleware.main.TenantMainMiddleware',
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -100,11 +108,13 @@ WSGI_APPLICATION = 'accthreads.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgres://postgres@db:5432/threads')
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgres://postgres@db:5432/thrd')
 
 DATABASES = {
     'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
 }
+
+DATABASES['default']['ENGINE'] = 'django_tenants.postgresql_backend'
 
 
 # Password validation
