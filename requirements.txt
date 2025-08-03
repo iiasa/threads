@@ -1,0 +1,9 @@
+psycopg[binary]==3.1.18
+djangorestframework==3.16.0
+Django
+dj-rest-auth==7.0.1
+django-allauth==65.10.0
+django-cors-headers==4.7.0
+requests==2.32.4
+PyJWT==2.10.1
+cryptography==45.0.5
