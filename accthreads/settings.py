@@ -29,9 +29,6 @@ SECRET_KEY = 'django-insecure-#cdh-u0xu(rx#b4yvs1ojv-jve91203)7#gqc9#m*6b)av$n@)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
-
 # Application definition
 
 SHARED_APPS = [
@@ -213,3 +210,13 @@ DATABASE_ROUTERS = (
 )
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+
+ALLOWED_HOSTS = [
+    'threads.iiasa.ac.at',
+    'lpd.threads.iiasa.ac.at'
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://threads.iiasa.ac.at",
+    "https://lpd.threads.iiasa.ac.at",
+]
