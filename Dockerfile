@@ -1,26 +1,41 @@
-# Use the official Python base image
+# Use official slim Python image
 FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Set working directory
+# Create working directory
 WORKDIR /app
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    curl \
+    netcat \
     && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user
+RUN adduser --disabled-password --no-create-home --gecos '' appuser
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copy the project files
 COPY . .
 
-# Run Django commands (you might use entrypoint.sh for more control)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
+# Set user permissions
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Use Gunicorn as the WSGI server
+CMD ["gunicorn", "accthreads.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120"]

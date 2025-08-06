@@ -11,3 +11,4 @@ django-filter==25.1
 dj-database-url==3.0.1
 django-tenants==3.8.0
 drf-spectacular==0.28.0
+gunicorn
