@@ -1,3 +1,7 @@
+# Comment threads and annotations for ACCMS and otherwise
+
+The content management system of the Accelerator or otherwise can back multiple websites. To support comment threads or annotations on a web component such as a chart, there is need for a multi-tenant service. This repo defines that service.
+
 **Making first public tenant**
 ```
 tenant = Client(name="Main", schema_name="public")
