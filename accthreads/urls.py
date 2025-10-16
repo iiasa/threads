@@ -24,9 +24,9 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
-from comments.views import AnonymousLoginView, GoogleLogin
+from comments.views import AnonymousLoginView, GoogleLogin, CustomConfirmEmailView
 
-from allauth.account.views import ConfirmEmailView, EmailVerificationSentView
+from allauth.account.views import EmailVerificationSentView
 
 
 
@@ -36,7 +36,7 @@ urlpatterns = [
 
     path(
         'api/auth/registration/account-confirm-email/<key>/',
-        ConfirmEmailView.as_view(),
+        CustomConfirmEmailView.as_view(),
         name='account_confirm_email',
     ),
 

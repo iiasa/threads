@@ -4,6 +4,9 @@ from rest_framework.decorators import action
 from django.core.mail import send_mail
 from django.conf import settings
 
+from allauth.account.views import ConfirmEmailView
+from django.shortcuts import render
+
 from .models import Comment
 from .serializers import CommentCreateSerializer, CommentSerializer, CommentListSerializer, CommentUpdateSerializer
 from django_filters.rest_framework import DjangoFilterBackend
@@ -202,3 +205,26 @@ class AnonymousLoginView(APIView):
 
     def _generate_random_password(self):
         return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+
+
+
+
+class CustomConfirmEmailView(ConfirmEmailView):
+    def get_redirect_url(self):
+        # prevent redirect after confirmation
+        return None
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        email_address = self.object.email_address
+
+        # If not verified yet, confirm it using the EmailConfirmation object
+        if not email_address.verified:
+            self.object.confirm(request)
+
+        # Always render the same template, whether it's first-time or already verified
+        return render(request, 'account/email_confirm_success.html', {
+            'email_address': email_address.email,
+            'already_verified': email_address.verified,
+        })
