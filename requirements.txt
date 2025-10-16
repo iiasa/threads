@@ -2,7 +2,7 @@ psycopg2-binary==2.9.10
 djangorestframework==3.16.0
 Django
 dj-rest-auth[with_social]==7.0.1
-django-allauth==65.10.0
+django-allauth==64.1.0
 django-cors-headers==4.7.0
 requests==2.32.4
 PyJWT==2.10.1

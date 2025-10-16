@@ -26,8 +26,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-#cdh-u0xu(rx#b4yvs1ojv-jve91203)7#gqc9#m*6b)av$n@)'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
 # Application definition
 
@@ -90,7 +90,7 @@ ROOT_URLCONF = 'accthreads.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -166,9 +166,13 @@ AUTHENTICATION_BACKENDS = (
 
 SITE_ID = 1
 
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_AUTHENTICATION_METHOD = 'username'
+
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False 
+ACCOUNT_AUTHENTICATION_METHOD = 'email' 
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+
 
 REST_USE_JWT = False
 
@@ -214,9 +218,28 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 ALLOWED_HOSTS = [
     'threads.iiasa.ac.at',
-    'lpd.threads.iiasa.ac.at'
+    'lpd.threads.iiasa.ac.at',
+    'admin.localhost',
+    'tenant1.localhost'
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://threads.iiasa.ac.at",
     "https://lpd.threads.iiasa.ac.at",
+    'http://admin.localhost',
+    'http://tenant1.localhost'
 ]
+
+if not DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'dzsmtp1011.iiasa.ac.at'
+    EMAIL_PORT = 25
+    EMAIL_USE_TLS = False
+    EMAIL_USE_SSL = False
+
+    EMAIL_HOST_USER = ''
+    EMAIL_HOST_PASSWORD = ''
+
+    DEFAULT_FROM_EMAIL = 'accelerator@iiasa.ac.at'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+

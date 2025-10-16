@@ -26,11 +26,29 @@ from drf_spectacular.views import (
 
 from comments.views import AnonymousLoginView, GoogleLogin
 
+from allauth.account.views import ConfirmEmailView, EmailVerificationSentView
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('dj_rest_auth.urls')),
+
+    path(
+        'api/auth/registration/account-confirm-email/<key>/',
+        ConfirmEmailView.as_view(),
+        name='account_confirm_email',
+    ),
+
+    # 👇 override the "verification sent" placeholder
+    path(
+        'api/auth/registration/account-email-verification-sent/',
+        EmailVerificationSentView.as_view(),
+        name='account_email_verification_sent',
+    ),
+
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
+
     path('api/auth/social/', include('allauth.socialaccount.urls')),
     path('api/comments/', include('comments.urls')),
     path('api/auth/anonymous/', AnonymousLoginView.as_view(), name='anonymous_login'),

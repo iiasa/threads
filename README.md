@@ -4,7 +4,7 @@ The content management system of the Accelerator or otherwise can back multiple 
 
 **Making first public tenant**
 ```
-from customers.models import Client, Domain
+from tenants.models import Client, Domain
 
 tenant = Client(name="Main", schema_name="public")
 Domain.objects.create(

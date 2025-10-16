@@ -1,6 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.core.mail import send_mail
+from django.conf import settings
 
 from .models import Comment
 from .serializers import CommentCreateSerializer, CommentSerializer, CommentListSerializer, CommentUpdateSerializer
@@ -48,13 +50,51 @@ class CommentViewSet(viewsets.ModelViewSet):
         return super().get_queryset()
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        comment = serializer.save(user=self.request.user)
+        actor = comment.user
+
+        # Collect all participants in the same thread except the actor
+        participant_emails = (
+            Comment.objects
+            .filter(thread_id=comment.thread_id)
+            .exclude(user=actor)
+            .values_list('user__email', flat=True)
+            .distinct()
+        )
+
+        recipients = [email for email in participant_emails if email]
+
+        if recipients:
+            subject = f"New comment in thread {comment.thread_id}"
+            message = f"{actor.username} wrote:\n\n{comment.text}"
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                recipients,
+                fail_silently=True,
+            )
+
+
 
     
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
     def like(self, request, pk=None):
         comment = self.get_object()
         comment.liked_by.add(request.user)
+
+        # Send email to the comment's author (if not liking their own)
+        if comment.user.email and comment.user != request.user:
+            subject = f"{request.user.username} liked your comment"
+            message = f"Hi {comment.user.username},\n\n{request.user.username} liked your comment in thread {comment.thread_id}."
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [comment.user.email],
+                fail_silently=True,
+            )
+            
         return Response({'status': 'liked'}, status=status.HTTP_200_OK)
 
     
