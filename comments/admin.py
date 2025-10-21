@@ -3,8 +3,17 @@ from .models import Comment
 
 admin.site.site_header = "Accelerator Threads Admin"
 
+
+class SafeModelAdmin(admin.ModelAdmin):
+    def log_deletion(self, request, object, object_repr):
+        try:
+            super().log_deletion(request, object, object_repr)
+        except Exception:
+            pass  # skip FK logging error temporarily
+
+
 @admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
+class CommentAdmin(SafeModelAdmin):
     list_display = ('id', 'user', 'short_text', 'parent', 'thread_id', 'likes_count', 'is_deleted', 'created_at')
     list_filter = ('is_deleted', 'created_at', 'updated_at')
     search_fields = ('user__username', 'text', 'thread_id')
